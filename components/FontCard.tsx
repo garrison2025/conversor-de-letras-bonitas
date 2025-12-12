@@ -25,7 +25,8 @@ interface ImageConfig {
     textColor: string;
     fontSize: number;
     padding: number;
-    aspectRatio: 'square' | 'portrait' | 'landscape';
+    width: number;
+    height: number;
     fontFamily: string;
 }
 
@@ -109,7 +110,8 @@ const FontCard: React.FC<FontCardProps> = ({ id, name, result, originalText = "T
       textColor: '#FFFFFF',
       fontSize: 60,
       padding: 80,
-      aspectRatio: 'square',
+      width: 1080,
+      height: 1080, // Default Square
       fontFamily: 'Outfit, sans-serif'
   });
 
@@ -154,23 +156,27 @@ const FontCard: React.FC<FontCardProps> = ({ id, name, result, originalText = "T
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      // Calculate Dimensions based on Aspect Ratio
-      let width = 1080;
-      let height = 1080;
-      if (imgConfig.aspectRatio === 'landscape') height = 600;
-      if (imgConfig.aspectRatio === 'portrait') width = 800;
+      // Use config dimensions
+      let width = imgConfig.width;
+      let height = imgConfig.height;
 
       // Use the original text if a web font is selected, otherwise use the unicode result
-      // This is crucial: Web fonts need normal characters to render properly.
       const textToRender = (imgConfig.fontFamily.includes('Outfit') && !imgConfig.fontFamily.includes('cursive')) 
           ? result 
           : originalText;
 
-      // Dynamic sizing based on text length to prevent clipping in simple mode
+      // Dynamic sizing based on text length to prevent clipping in simple mode if text is very long
+      // Only scale width up if not fixed aspect ratio mode? No, keep it fixed for social presets
+      // Instead, auto-scale font size down if it doesn't fit
       ctx.font = `${imgConfig.fontSize}px ${imgConfig.fontFamily}`;
       const textMetrics = ctx.measureText(textToRender);
-      const minWidth = textMetrics.width + (imgConfig.padding * 2);
-      if (minWidth > width) width = minWidth;
+      
+      // Simple font scaling logic
+      let finalFontSize = imgConfig.fontSize;
+      if (textMetrics.width > (width - imgConfig.padding * 2)) {
+          const ratio = (width - imgConfig.padding * 2) / textMetrics.width;
+          finalFontSize = Math.floor(imgConfig.fontSize * ratio);
+      }
 
       canvas.width = width;
       canvas.height = height;
@@ -180,8 +186,6 @@ const FontCard: React.FC<FontCardProps> = ({ id, name, result, originalText = "T
           ctx.clearRect(0, 0, canvas.width, canvas.height);
       } else {
           if (imgConfig.bgType === 'gradient') {
-              // Parse simple gradient string for canvas or just fill rect if using presets
-              // Simplified for reliability: Create a generic vibrant gradient if preset detected
               const grd = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
               if (imgConfig.bgValue.includes('4F46E5')) { // Sunset
                   grd.addColorStop(0, "#4F46E5"); grd.addColorStop(1, "#EC4899");
@@ -197,7 +201,6 @@ const FontCard: React.FC<FontCardProps> = ({ id, name, result, originalText = "T
           } else if (imgConfig.bgType === 'texture') {
               ctx.fillStyle = '#111';
               ctx.fillRect(0, 0, canvas.width, canvas.height);
-              // Simple noise simulation
               for (let i = 0; i < 50000; i++) {
                  ctx.fillStyle = `rgba(255,255,255,${Math.random() * 0.1})`;
                  ctx.fillRect(Math.random() * width, Math.random() * height, 2, 2);
@@ -210,8 +213,7 @@ const FontCard: React.FC<FontCardProps> = ({ id, name, result, originalText = "T
 
       // Text
       ctx.fillStyle = imgConfig.textColor;
-      // Ensure we use the selected web font
-      ctx.font = `400 ${imgConfig.fontSize}px ${imgConfig.fontFamily}`; 
+      ctx.font = `400 ${finalFontSize}px ${imgConfig.fontFamily}`; 
       ctx.textBaseline = 'middle';
       ctx.textAlign = 'center';
       
@@ -223,8 +225,7 @@ const FontCard: React.FC<FontCardProps> = ({ id, name, result, originalText = "T
       // Watermark
       ctx.fillStyle = (imgConfig.bgType === 'solid' && imgConfig.bgValue === '#FFFFFF') ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.4)';
       ctx.font = '24px "DM Sans", sans-serif';
-      // Updated watermark to match the actual domain
-      ctx.fillText('conversordeletrasbonitas.org', x, canvas.height - 40);
+      ctx.fillText('letrasbonitas.pro', x, canvas.height - 40);
 
       try {
           const dataUrl = canvas.toDataURL('image/png');
@@ -243,6 +244,12 @@ const FontCard: React.FC<FontCardProps> = ({ id, name, result, originalText = "T
   const handlePinClick = (e: React.MouseEvent) => {
       e.stopPropagation();
       onTogglePin();
+  };
+
+  const setPreset = (type: 'post' | 'story' | 'header') => {
+      if (type === 'post') setImgConfig({ ...imgConfig, width: 1080, height: 1080 });
+      if (type === 'story') setImgConfig({ ...imgConfig, width: 1080, height: 1920 });
+      if (type === 'header') setImgConfig({ ...imgConfig, width: 1500, height: 500 });
   };
 
   return (
@@ -404,8 +411,14 @@ const FontCard: React.FC<FontCardProps> = ({ id, name, result, originalText = "T
                             <div className="absolute inset-0 opacity-20 pointer-events-none" style={{backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.65\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\' opacity=\'1\'/%3E%3C/svg%3E")'}}></div>
                         )}
                         
-                        <div className="relative z-10 text-center w-full px-4">
-                            <span className="text-3xl break-words leading-tight" style={{ 
+                        <div className="relative z-10 text-center w-full px-4" style={{ 
+                            aspectRatio: `${imgConfig.width}/${imgConfig.height}`,
+                            maxHeight: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}>
+                            <span className="text-2xl md:text-3xl break-words leading-tight" style={{ 
                                 color: imgConfig.textColor, 
                                 fontFamily: imgConfig.fontFamily 
                             }}>
@@ -417,7 +430,32 @@ const FontCard: React.FC<FontCardProps> = ({ id, name, result, originalText = "T
 
                     {/* Controls */}
                     <div className="p-6 space-y-5">
-                        {/* Font Selector (Category 2 Request) */}
+                        {/* Format Buttons */}
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Formato</label>
+                            <div className="grid grid-cols-3 gap-2">
+                                <button 
+                                    onClick={() => setPreset('post')}
+                                    className={`px-3 py-2 rounded-lg border text-xs font-medium transition-colors ${imgConfig.width === 1080 && imgConfig.height === 1080 ? 'bg-pink-500/20 border-pink-500 text-pink-300' : 'bg-slate-800 border-white/10 text-slate-400 hover:border-white/30'}`}
+                                >
+                                    Post (1:1)
+                                </button>
+                                <button 
+                                    onClick={() => setPreset('story')}
+                                    className={`px-3 py-2 rounded-lg border text-xs font-medium transition-colors ${imgConfig.width === 1080 && imgConfig.height === 1920 ? 'bg-pink-500/20 border-pink-500 text-pink-300' : 'bg-slate-800 border-white/10 text-slate-400 hover:border-white/30'}`}
+                                >
+                                    Story (9:16)
+                                </button>
+                                <button 
+                                    onClick={() => setPreset('header')}
+                                    className={`px-3 py-2 rounded-lg border text-xs font-medium transition-colors ${imgConfig.width === 1500 && imgConfig.height === 500 ? 'bg-pink-500/20 border-pink-500 text-pink-300' : 'bg-slate-800 border-white/10 text-slate-400 hover:border-white/30'}`}
+                                >
+                                    Header (3:1)
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Font Selector */}
                         <div>
                             <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Fuente (Estilo Real)</label>
                             <select 

@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { FontCategory, RouteConfig, ReadabilityLevel } from '../types';
-import { getFontsByCategory } from '../services/fontService';
+import { FontCategory, RouteConfig } from '../types';
+import { getFontsByCategory, SYMBOL_COLLECTIONS, AESTHETIC_PHRASES } from '../services/fontService';
 import FontCard from './FontCard';
+import { BLOG_POSTS } from '../data/blogPosts';
 
 interface CategoryPageProps {
   config: RouteConfig;
@@ -24,6 +25,35 @@ interface Toast {
   type: 'success' | 'info';
 }
 
+const CategoryTips: Record<string, string> = {
+    [FontCategory.ALL]: "Tip Pro: Mezcla estilos (Negrita + Cursiva) para crear jerarquía visual en tus textos.",
+    [FontCategory.CURSIVE]: "Tip Visual: Las cursivas funcionan mejor en minúsculas. Evita escribir todo en MAYÚSCULAS con estos estilos.",
+    [FontCategory.TATTOO]: "Tip de Tatuaje: Evita estilos muy densos para tamaños pequeños; la tinta se expande con los años.",
+    [FontCategory.GOTHIC]: "Tip Gamer: Los nicks góticos destacan más en la 'Kill Feed' de juegos como Free Fire.",
+    [FontCategory.FACEBOOK]: "Tip de Marketing: Usa negritas solo en los titulares. El texto largo en negrita cansa la vista.",
+    [FontCategory.GRAFFITI]: "Tip Urbano: Los estilos de burbuja ocupan más espacio horizontal, ideales para llamar la atención.",
+    [FontCategory.AMINO]: "Tip Aesthetic: Usa marcos 【 】 para resaltar secciones importantes en tus blogs.",
+};
+
+const CATEGORY_MAP_TO_BLOG: Record<string, string[]> = {
+    [FontCategory.ALL]: ['Tutoriales', 'Redes Sociales', 'Diseño'],
+    [FontCategory.CURSIVE]: ['Tutoriales', 'Diseño'],
+    [FontCategory.TATTOO]: ['Tatuajes'],
+    [FontCategory.GOTHIC]: ['Gaming', 'Tatuajes'],
+    [FontCategory.GRAFFITI]: ['Diseño', 'Redes Sociales'],
+    [FontCategory.FACEBOOK]: ['Redes Sociales'],
+    [FontCategory.AMINO]: ['Tutoriales', 'Redes Sociales']
+};
+
+// NEW: Quick Templates
+const QUICK_TEMPLATES = [
+    { label: 'Perfil Bio', text: 'Nombre | 📍 Ciudad | ♈ Signo', icon: '👤' },
+    { label: 'Nick Gamer', text: '⚡ TuNick ⚡', icon: '🎮' },
+    { label: 'Fecha', text: 'DD • MM • YYYY', icon: '📅' },
+    { label: 'Amor', text: 'Nombre ∞ Nombre', icon: '❤️' },
+    { label: 'Lista', text: '✨ Item 1 \n✨ Item 2 \n✨ Item 3', icon: '📝' },
+];
+
 const CategoryPage: React.FC<CategoryPageProps> = ({ config }) => {
   // PERSISTENCE: Initialize state from sessionStorage if available
   const [inputText, setInputText] = useState(() => {
@@ -39,19 +69,20 @@ const CategoryPage: React.FC<CategoryPageProps> = ({ config }) => {
   const [caseMode, setCaseMode] = useState<CaseType>('normal');
   const [pinnedFonts, setPinnedFonts] = useState<string[]>([]);
   const [recentHistory, setRecentHistory] = useState<string[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [minReadability, setMinReadability] = useState<'all' | 'medium' | 'high'>('all');
+  const [activeSymbolTab, setActiveSymbolTab] = useState(SYMBOL_COLLECTIONS[0].id);
+  const [showTip, setShowTip] = useState(true);
   
   // UX State
-  const [isSticky, setIsSticky] = useState(false);
-  const stickyRef = useRef<HTMLDivElement>(null);
-  const observerRef = useRef<IntersectionObserver | null>(null);
+  const [showScrollTop, setShowScrollTop] = useState(false); 
+  const loadMoreRef = useRef<HTMLDivElement>(null);
   
   // Virtualization / Infinite Scroll State
   const [visibleCount, setVisibleCount] = useState(24);
-  const loadMoreRef = useRef<HTMLDivElement>(null);
   
   // Dynamic Placeholder State
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
@@ -72,24 +103,26 @@ const CategoryPage: React.FC<CategoryPageProps> = ({ config }) => {
       }
 
       return () => observer.disconnect();
-  }, [debouncedText, searchTerm, config.category, minReadability]); // Reset observer when content structure changes
+  }, [debouncedText, searchTerm, config.category, minReadability]); 
 
-  // Sticky Header Logic
+  // Scroll Top Logic
   useEffect(() => {
       const handleScroll = () => {
-          if (stickyRef.current) {
-              const rect = stickyRef.current.getBoundingClientRect();
-              setIsSticky(rect.top <= 85); // 80px is top-20 roughly
-          }
+          // Show scroll-to-top button after 500px
+          setShowScrollTop(window.scrollY > 500);
       };
-      window.addEventListener('scroll', handleScroll);
-      return () => window.removeEventListener('scroll', handleScroll);
+      
+      window.addEventListener('scroll', handleScroll, { passive: true });
+      return () => {
+          window.removeEventListener('scroll', handleScroll);
+      };
   }, []);
 
-  // Reset decoration when category changes
+  // Reset decoration & tip when category changes
   useEffect(() => {
-      setVisibleCount(24); // Reset infinite scroll
+      setVisibleCount(24); 
       setDecoration('none');
+      setShowTip(true);
   }, [config.category]);
 
   useEffect(() => {
@@ -126,7 +159,6 @@ const CategoryPage: React.FC<CategoryPageProps> = ({ config }) => {
   }, [inputText]);
 
   const standardFonts = getFontsByCategory(config.category);
-  const isSocialBio = inputText.length > 150; 
 
   const showToast = (message: string, type: 'success' | 'info' = 'success') => {
       const id = Date.now();
@@ -140,17 +172,31 @@ const CategoryPage: React.FC<CategoryPageProps> = ({ config }) => {
       showToast('Copiado al portapapeles', 'success');
       
       setRecentHistory(prev => {
+          // Add to history if not duplicate of the very last item (simple check)
+          // or filter existing to move to top
           const filtered = prev.filter(item => item !== text); 
-          const newHistory = [text, ...filtered].slice(0, 5); 
+          const newHistory = [text, ...filtered].slice(0, 10); // Keep last 10
           localStorage.setItem('copy_history', JSON.stringify(newHistory));
           return newHistory;
       });
   };
 
-  const handleRestoreHistory = (text: string) => {
-      navigator.clipboard.writeText(text);
-      setInputText(text); // Also restore to input for UX
-      showToast('Restaurado y Copiado', 'success');
+  const handleCopyInput = () => {
+      if(!inputText) return;
+      navigator.clipboard.writeText(inputText);
+      showToast('Texto original copiado', 'success');
+  };
+
+  const restoreFromHistory = (text: string) => {
+      setInputText(text);
+      showToast('Restaurado al editor', 'info');
+      setShowHistory(false);
+  };
+
+  const clearHistory = () => {
+      setRecentHistory([]);
+      localStorage.removeItem('copy_history');
+      showToast('Historial borrado', 'info');
   };
 
   const togglePin = (fontId: string) => {
@@ -182,6 +228,21 @@ const CategoryPage: React.FC<CategoryPageProps> = ({ config }) => {
     } catch (err) {
         showToast('Error al pegar', 'info');
     }
+  };
+
+  const handleRandomPhrase = () => {
+      const phrase = AESTHETIC_PHRASES[Math.floor(Math.random() * AESTHETIC_PHRASES.length)];
+      setInputText(phrase);
+      showToast('✨ Frase mágica insertada');
+  };
+
+  // NEW: Scroll to Top Handler
+  const scrollToTop = () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // Also focus the input
+      setTimeout(() => {
+          if (textareaRef.current) textareaRef.current.focus();
+      }, 500);
   };
 
   const insertSymbol = (symbol: string) => {
@@ -291,7 +352,6 @@ const CategoryPage: React.FC<CategoryPageProps> = ({ config }) => {
   });
 
   const displayedFonts = sortedFonts.slice(0, visibleCount);
-  const commonSymbols = ['★', '♥', '⚡', '♛', '☠', '✈', '♫', '☁', '✿', '☾', '➤', '⚓', '⚔'];
 
   // Keyword optimization helper logic
   const getSearchPlaceholder = () => {
@@ -310,6 +370,11 @@ const CategoryPage: React.FC<CategoryPageProps> = ({ config }) => {
       return "No se encontraron estilos con los filtros actuales.";
   }
 
+  // Get related posts based on current category
+  const relatedPosts = BLOG_POSTS.filter(post => 
+      CATEGORY_MAP_TO_BLOG[config.category]?.includes(post.category)
+  ).slice(0, 3); // Limit to 3
+
   return (
     <div className="pt-32 pb-24 relative min-h-screen">
       
@@ -323,10 +388,48 @@ const CategoryPage: React.FC<CategoryPageProps> = ({ config }) => {
           ))}
       </div>
 
+      {/* NEW: Scroll to Top Button */}
+      <button
+        onClick={scrollToTop}
+        className={`
+            fixed bottom-6 right-6 z-40 bg-pink-600 hover:bg-pink-500 text-white w-12 h-12 rounded-full shadow-lg border border-white/10 flex items-center justify-center transition-all duration-300
+            ${showScrollTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}
+        `}
+        aria-label="Volver arriba"
+      >
+        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>
+      </button>
+
       <div className="max-w-[1400px] mx-auto px-6">
         
-        {/* Header - Hides on very small screens if sticky active could be considered, but simplified here */}
-        <div className={`flex flex-col items-center justify-center text-center mb-12 ${isSticky ? 'opacity-0 h-0 overflow-hidden pointer-events-none' : 'opacity-100 transition-all duration-300'}`}>
+        {/* SEO Breadcrumbs */}
+        <div className="flex items-center justify-center gap-2 text-sm text-slate-500 mb-4 font-medium animate-fade-in">
+            <a href="#/" className="hover:text-white transition-colors">Inicio</a>
+            <span className="text-slate-700">/</span>
+            {config.category !== FontCategory.ALL ? (
+                <>
+                    <span className="text-pink-500">{config.title.split(' - ')[0]}</span>
+                </>
+            ) : (
+                <span className="text-pink-500">Todas las Fuentes</span>
+            )}
+        </div>
+
+        {/* Dynamic Pro Tip Banner */}
+        {showTip && CategoryTips[config.category] && (
+            <div className="max-w-2xl mx-auto mb-8 animate-fade-in-up">
+                <div className="bg-gradient-to-r from-indigo-500/10 to-pink-500/10 border border-indigo-500/20 rounded-full px-4 py-2 flex items-center justify-between text-xs md:text-sm">
+                    <span className="flex items-center gap-2 text-indigo-300">
+                        <span className="bg-indigo-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">TIP</span>
+                        {CategoryTips[config.category]}
+                    </span>
+                    <button onClick={() => setShowTip(false)} className="text-slate-500 hover:text-white ml-4">✕</button>
+                </div>
+            </div>
+        )}
+
+        {/* Header - No height change on scroll, just opacity */}
+        <div className="flex flex-col items-center justify-center text-center mb-12">
             <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-white mb-6 leading-[1.1]">
                 {config.title.split(' ').map((word, i) => (
                     <span key={i} className={i === 1 ? 'text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-red-500 to-amber-500' : ''}>
@@ -339,21 +442,15 @@ const CategoryPage: React.FC<CategoryPageProps> = ({ config }) => {
             </p>
         </div>
 
-        {/* Sticky Input Wrapper */}
-        <div 
-            ref={stickyRef}
-            className={`
-                max-w-4xl mx-auto mb-16 relative z-30 transition-all duration-500 ease-in-out
-                ${isSticky ? 'sticky top-[85px]' : ''}
-            `}
-        >
+        {/* Input Wrapper - STATIC POSITION (No Sticky) */}
+        <div className="max-w-4xl mx-auto mb-16 z-30 relative">
              <div className={`
                 relative rounded-3xl transition-all duration-300 ease-out p-[1px]
-                ${isFocused || isSticky
+                ${isFocused
                     ? 'bg-gradient-to-r from-pink-500 via-red-500 to-amber-500 shadow-[0_0_50px_-10px_rgba(236,72,153,0.3)]' 
                     : 'bg-white/10 hover:bg-white/20'}
              `}>
-                <div className={`bg-slate-900/95 backdrop-blur-xl rounded-[23px] overflow-hidden relative flex flex-col shadow-2xl transition-all duration-500 ${isSticky ? 'scale-[0.98]' : ''}`}>
+                <div className="bg-slate-900/95 backdrop-blur-xl rounded-[23px] overflow-hidden relative flex flex-col shadow-2xl">
                     <textarea
                         ref={textareaRef}
                         value={inputText}
@@ -361,39 +458,128 @@ const CategoryPage: React.FC<CategoryPageProps> = ({ config }) => {
                         onFocus={() => setIsFocused(true)}
                         onBlur={() => setIsFocused(false)}
                         placeholder="Escribe tu frase aquí..."
-                        className={`
-                            w-full bg-transparent p-4 md:p-8 font-bold text-white placeholder-slate-600 outline-none resize-none leading-snug text-center transition-all duration-500
-                            ${isSticky ? 'text-xl py-4 min-h-[60px]' : 'text-2xl md:text-4xl pb-4 min-h-[120px]'}
-                        `}
+                        className="w-full bg-transparent p-6 md:p-8 font-bold text-white placeholder-slate-600 outline-none resize-none leading-snug text-center text-2xl md:text-4xl min-h-[120px]"
                         rows={1}
                         spellCheck={false}
                     />
+
+                    {/* Random Dice Button */}
+                    <button 
+                        onClick={handleRandomPhrase}
+                        title="¡Sorpréndeme!"
+                        className={`absolute right-4 top-4 md:right-8 md:top-8 p-2 text-2xl text-slate-500 hover:text-pink-400 hover:scale-110 transition-all z-20 ${inputText.length > 0 ? 'opacity-0 pointer-events-none' : 'opacity-50 hover:opacity-100'}`}
+                    >
+                        🎲
+                    </button>
+
+                    {/* Text Statistics Bar */}
+                    <div className="flex items-center justify-center gap-6 px-4 py-2 bg-black/20 text-[10px] md:text-xs font-mono text-slate-400 uppercase tracking-widest border-t border-white/5">
+                        <span className="flex items-center gap-1">
+                            <span className="text-pink-500 font-bold">{inputText.length}</span> Caracteres
+                        </span>
+                        <span className="flex items-center gap-1">
+                            <span className="text-indigo-500 font-bold">{inputText.trim().split(/\s+/).filter(w => w.length > 0).length}</span> Palabras
+                        </span>
+                        <span className="flex items-center gap-1">
+                            <span className="text-emerald-500 font-bold">{inputText.split(/\r\n|\r|\n/).length}</span> Líneas
+                        </span>
+                    </div>
                     
-                    {/* Collapsible Toolbar for Sticky Mode */}
-                    <div className={`overflow-hidden transition-all duration-500 ${isSticky ? 'max-h-0 opacity-0' : 'max-h-40 opacity-100'}`}>
-                        {/* Quick Symbols Bar */}
-                        <div className="flex items-center gap-2 px-6 pb-2 overflow-x-auto no-scrollbar justify-start md:justify-center">
-                            {commonSymbols.map(sym => (
-                                <button
-                                    key={sym}
-                                    onClick={() => insertSymbol(sym)}
-                                    className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white transition-all text-xl"
-                                >{sym}</button>
-                            ))}
+                    {/* Toolbar */}
+                    <div>
+                        
+                        {/* NEW: Quick Templates Toolbar */}
+                        <div className="bg-slate-900/50 border-t border-white/5 py-2">
+                            <div className="flex justify-center gap-2 overflow-x-auto no-scrollbar px-4">
+                                {QUICK_TEMPLATES.map((tmpl, idx) => (
+                                    <button
+                                        key={idx}
+                                        onClick={() => {
+                                            setInputText(tmpl.text);
+                                            showToast('Plantilla aplicada');
+                                        }}
+                                        className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/5 text-xs font-bold text-slate-300 hover:bg-white/10 hover:text-white hover:border-pink-500/30 transition-all whitespace-nowrap group"
+                                    >
+                                        <span className="text-base group-hover:scale-110 transition-transform">{tmpl.icon}</span>
+                                        {tmpl.label}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
+
+                        {/* Enhanced Symbol Library (Tabbed) */}
+                        <div className="bg-slate-900/50 border-t border-white/5">
+                            {/* Tabs */}
+                            <div className="flex overflow-x-auto no-scrollbar border-b border-white/5">
+                                {SYMBOL_COLLECTIONS.map(cat => (
+                                    <button
+                                        key={cat.id}
+                                        onClick={() => setActiveSymbolTab(cat.id)}
+                                        className={`px-4 py-2 text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-colors
+                                            ${activeSymbolTab === cat.id ? 'text-white bg-white/10' : 'text-slate-500 hover:text-slate-300'}
+                                        `}
+                                    >
+                                        {cat.label}
+                                    </button>
+                                ))}
+                            </div>
+                            {/* Symbol Grid */}
+                            <div className="flex items-center gap-2 px-6 py-3 overflow-x-auto no-scrollbar justify-start md:justify-center bg-black/10 min-h-[50px]">
+                                {SYMBOL_COLLECTIONS.find(c => c.id === activeSymbolTab)?.items.map(sym => (
+                                    <button
+                                        key={sym}
+                                        onClick={() => insertSymbol(sym)}
+                                        className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 text-slate-300 hover:bg-pink-500 hover:text-white transition-all text-sm md:text-base"
+                                    >{sym}</button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* History Panel (Conditional) */}
+                        {showHistory && (
+                            <div className="bg-slate-900 border-t border-white/5 p-4 animate-fade-in">
+                                <div className="flex justify-between items-center mb-3">
+                                    <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Historial Reciente</span>
+                                    <button onClick={clearHistory} className="text-xs text-red-400 hover:text-red-300">Borrar Todo</button>
+                                </div>
+                                <div className="space-y-2 max-h-40 overflow-y-auto no-scrollbar">
+                                    {recentHistory.length === 0 && <p className="text-center text-slate-600 text-sm py-4">No hay historial reciente</p>}
+                                    {recentHistory.map((item, idx) => (
+                                        <div key={idx} className="flex gap-2">
+                                            <button 
+                                                onClick={() => restoreFromHistory(item)}
+                                                className="flex-1 text-left bg-white/5 hover:bg-white/10 p-2 rounded-lg text-sm text-slate-300 truncate transition-colors"
+                                            >
+                                                {item}
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         {/* Actions */}
                         <div className="flex flex-col md:flex-row items-center justify-between px-6 py-4 border-t border-white/5 bg-black/20 gap-3">
-                             <div className="flex gap-2">
-                                <button onClick={handlePaste} className="px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-white/5 text-slate-400 hover:text-white transition-colors">Pegar</button>
-                                <button onClick={() => setInputText('')} className="px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-red-500/10 text-red-400 hover:text-red-300 transition-colors">Borrar</button>
+                             <div className="flex gap-2 w-full md:w-auto">
+                                <button onClick={handlePaste} className="flex-1 md:flex-none px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-colors">
+                                    Pegar
+                                </button>
+                                <button onClick={handleCopyInput} className="flex-1 md:flex-none px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-colors">
+                                    Copiar
+                                </button>
+                                <button onClick={() => setShowHistory(!showHistory)} className={`flex-1 md:flex-none px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors ${showHistory ? 'bg-indigo-500 text-white' : 'bg-white/5 text-slate-400 hover:text-white'}`}>
+                                    Historial
+                                </button>
+                                <button onClick={handleClear} className="flex-1 md:flex-none px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-red-500/10 text-red-400 hover:text-red-300 hover:bg-red-500/20 transition-colors">
+                                    Borrar
+                                </button>
                              </div>
                              
-                             <div className="flex gap-2">
-                                <button onClick={toggleDecoration} className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider border ${decoration !== 'none' ? 'bg-pink-500/20 text-pink-300 border-pink-500/50' : 'bg-white/5 text-slate-400 border-transparent'}`}>
+                             <div className="flex gap-2 w-full md:w-auto">
+                                <button onClick={toggleDecoration} className={`flex-1 md:flex-none px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider border ${decoration !== 'none' ? 'bg-pink-500/20 text-pink-300 border-pink-500/50' : 'bg-white/5 text-slate-400 border-transparent hover:bg-white/10'}`}>
                                     {decoration === 'none' ? 'Decorar' : 'Decorado'}
                                 </button>
-                                <button onClick={toggleCase} className="w-10 px-0 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-white/5 text-slate-400">
+                                <button onClick={toggleCase} className="flex-1 md:flex-none w-auto md:w-12 px-0 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-colors">
                                     {caseMode === 'normal' ? 'Aa' : caseMode === 'upper' ? 'AA' : 'aa'}
                                 </button>
                              </div>
@@ -429,7 +615,7 @@ const CategoryPage: React.FC<CategoryPageProps> = ({ config }) => {
             
             <div className="flex bg-white/5 p-1 rounded-lg border border-white/5">
                 <button onClick={() => setViewMode('grid')} className={`p-2 rounded-md ${viewMode === 'grid' ? 'bg-white/10 text-white' : 'text-slate-500'}`}>
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" /></svg>
                 </button>
                 <button onClick={() => setViewMode('list')} className={`p-2 rounded-md ${viewMode === 'list' ? 'bg-white/10 text-white' : 'text-slate-500'}`}>
                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
@@ -473,9 +659,38 @@ const CategoryPage: React.FC<CategoryPageProps> = ({ config }) => {
         {/* No Results */}
         {sortedFonts.length === 0 && (
              <div className="flex flex-col items-center justify-center py-20 bg-white/5 rounded-3xl border border-dashed border-slate-700">
-                <p className="text-slate-400">{getNoResultsMessage()}</p>
+                <p className="text-slate-400 mb-2">{getNoResultsMessage()}</p>
+                <p className="text-slate-500 text-sm">Prueba buscando: "Negrita", "Círculos", "Tachado"</p>
                 <button onClick={() => {setSearchTerm(''); setMinReadability('all');}} className="mt-4 text-pink-400 hover:underline">Limpiar filtros</button>
              </div>
+        )}
+
+        {/* Contextual Related Posts (New Feature) */}
+        {relatedPosts.length > 0 && (
+            <div className="mt-24 pt-12 border-t border-white/5">
+                <div className="flex items-center gap-3 mb-8">
+                    <span className="text-2xl">📚</span>
+                    <h3 className="text-xl font-bold text-white">Artículos Relacionados</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {relatedPosts.map(post => (
+                        <a 
+                            key={post.id}
+                            href={`#/blog/${post.slug}`}
+                            className="group block bg-slate-900 border border-white/5 rounded-xl overflow-hidden hover:border-pink-500/30 transition-all hover:-translate-y-1"
+                        >
+                            <div className={`h-32 bg-gradient-to-br ${post.coverGradient} flex items-center justify-center relative`}>
+                                <div className="absolute inset-0 bg-black/20"></div>
+                                <span className="text-4xl relative z-10">{post.category === 'Tutoriales' ? '📱' : post.category === 'Tatuajes' ? '🐉' : '🎨'}</span>
+                            </div>
+                            <div className="p-5">
+                                <span className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-2 block">{post.category}</span>
+                                <h4 className="text-white font-bold leading-tight group-hover:text-pink-400 transition-colors line-clamp-2">{post.title}</h4>
+                            </div>
+                        </a>
+                    ))}
+                </div>
+            </div>
         )}
 
       </div>

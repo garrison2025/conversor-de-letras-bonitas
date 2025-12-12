@@ -26,18 +26,11 @@ const BlogPostPage: React.FC<BlogPostPageProps> = ({ post, onNavigate }) => {
     // Helper to handle internal links in content
     const handleInternalClick = (e: React.MouseEvent<HTMLElement>) => {
         const target = e.target as HTMLElement;
-        // Handle direct A tags or A tags nested (e.g. bold inside a)
-        const anchor = target.tagName === 'A' ? target : target.closest('a');
-        
-        if (anchor) {
-            const href = anchor.getAttribute('href');
-            // If it is a hash link from old content (starts with #/), convert to clean
+        if (target.tagName === 'A') {
+            const href = target.getAttribute('href');
             if (href && href.startsWith('#/')) {
                 e.preventDefault();
-                onNavigate(href.replace('#', ''));
-            } else if (href && href.startsWith('/') && !href.startsWith('//')) {
-                 e.preventDefault();
-                 onNavigate(href);
+                onNavigate(href);
             }
         }
     };
@@ -51,9 +44,9 @@ const BlogPostPage: React.FC<BlogPostPageProps> = ({ post, onNavigate }) => {
                 
                 {/* Breadcrumbs */}
                 <div className="flex items-center gap-2 text-sm text-slate-500 mb-8 font-mono">
-                    <a href="/" onClick={(e) => {e.preventDefault(); onNavigate('/');}} className="hover:text-emerald-400">Inicio</a>
+                    <a href="#/" onClick={(e) => {e.preventDefault(); onNavigate('#/');}} className="hover:text-emerald-400">Inicio</a>
                     <span>/</span>
-                    <a href="/blog" onClick={(e) => {e.preventDefault(); onNavigate('/blog');}} className="hover:text-emerald-400">Blog</a>
+                    <a href="#/blog" onClick={(e) => {e.preventDefault(); onNavigate('#/blog');}} className="hover:text-emerald-400">Blog</a>
                     <span>/</span>
                     <span className="text-slate-300 truncate max-w-[150px]">{post.category}</span>
                 </div>
@@ -115,8 +108,8 @@ const BlogPostPage: React.FC<BlogPostPageProps> = ({ post, onNavigate }) => {
                         Usa nuestro generador gratuito para crear las letras que acabas de ver en este artículo.
                     </p>
                     <a 
-                        href="/" 
-                        onClick={(e) => {e.preventDefault(); onNavigate('/');}}
+                        href="#/" 
+                        onClick={(e) => {e.preventDefault(); onNavigate('#/');}}
                         className="inline-flex relative z-10 items-center gap-2 bg-white text-slate-900 hover:bg-slate-100 px-8 py-3 rounded-xl font-bold transition-transform active:scale-95 shadow-lg shadow-white/10"
                     >
                         ✨ Ir al Conversor

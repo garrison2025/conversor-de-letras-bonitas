@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { FontCategory } from '../types';
 
@@ -31,18 +30,19 @@ const Navbar: React.FC<NavbarProps> = ({ currentCategory, onNavigate }) => {
 
   // Defined with explicit paths for SEO crawling
   const links = [
-    { id: FontCategory.ALL, label: 'Inicio', icon: '✨', path: '/' },
-    { id: FontCategory.CURSIVE, label: 'Cursivas', icon: '✍️', path: '/letras-cursivas' },
-    { id: FontCategory.FACEBOOK, label: 'Facebook', icon: '📘', path: '/letras-facebook' },
-    { id: FontCategory.TATTOO, label: 'Tatuajes', icon: '🐉', path: '/letras-tatuajes' },
-    { id: FontCategory.GOTHIC, label: 'Góticas', icon: '🏰', path: '/letras-goticas' },
-    { id: FontCategory.AMINO, label: 'Amino', icon: '💎', path: '/letras-amino' },
-    { id: 'blog', label: 'Blog', icon: '📰', path: '/blog' }, // Added Blog Link
+    { id: FontCategory.ALL, label: 'Inicio', icon: '✨', path: '#/' },
+    { id: FontCategory.CURSIVE, label: 'Cursivas', icon: '✍️', path: '#/letras-cursivas' },
+    { id: FontCategory.FACEBOOK, label: 'Facebook', icon: '📘', path: '#/letras-facebook' },
+    { id: FontCategory.TATTOO, label: 'Tatuajes', icon: '🐉', path: '#/letras-tatuajes' },
+    { id: FontCategory.GOTHIC, label: 'Góticas', icon: '🏰', path: '#/letras-goticas' },
+    { id: FontCategory.GRAFFITI, label: 'Graffiti', icon: '🎨', path: '#/letras-graffiti' },
+    { id: FontCategory.AMINO, label: 'Amino', icon: '💎', path: '#/letras-amino' },
+    { id: 'blog', label: 'Blog', icon: '📰', path: '#/blog' }, // Added Blog Link
   ];
 
   const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
     e.preventDefault();
-    onNavigate(path === '/' ? FontCategory.ALL : path === '/blog' ? 'blog' : path.substring(1) as any);
+    window.location.hash = path;
     setIsOpen(false);
   };
 
@@ -62,9 +62,9 @@ const Navbar: React.FC<NavbarProps> = ({ currentCategory, onNavigate }) => {
           
           {/* Logo Section */}
           <a 
-            href="/"
+            href="#/"
             className="flex items-center gap-3 group focus:outline-none cursor-pointer"
-            onClick={(e) => handleLinkClick(e, '/')}
+            onClick={(e) => handleLinkClick(e, '#/')}
           >
             <div className="relative w-10 h-10 flex items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 shadow-lg shadow-purple-500/20 group-hover:shadow-purple-500/40 transition-all duration-300 group-hover:scale-105">
                 <span className="font-bold text-xl text-white">L</span>
@@ -89,13 +89,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentCategory, onNavigate }) => {
                 <a
                   key={link.id}
                   href={link.path}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    // Map path back to logic for onNavigate prop
-                    if (link.id === FontCategory.ALL) onNavigate(FontCategory.ALL);
-                    else if (link.id === 'blog') onNavigate('blog');
-                    else onNavigate(link.id as FontCategory);
-                  }}
+                  onClick={(e) => handleLinkClick(e, link.path)}
                   className={`
                     relative px-5 py-2 text-sm font-medium rounded-full transition-all duration-300 flex items-center gap-2 cursor-pointer
                     ${isActive 
@@ -153,13 +147,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentCategory, onNavigate }) => {
                         <a
                           key={link.id}
                           href={link.path}
-                          onClick={(e) => {
-                             e.preventDefault();
-                             if (link.id === FontCategory.ALL) onNavigate(FontCategory.ALL);
-                             else if (link.id === 'blog') onNavigate('blog');
-                             else onNavigate(link.id as FontCategory);
-                             setIsOpen(false);
-                          }}
+                          onClick={(e) => handleLinkClick(e, link.path)}
                           className={`
                             w-full flex items-center gap-4 p-4 rounded-2xl transition-all duration-300 active:scale-[0.98] cursor-pointer
                             ${isActive 

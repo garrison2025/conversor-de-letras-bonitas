@@ -10,16 +10,8 @@ const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
   // Helper to handle navigation without reloading the page
   const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
     e.preventDefault();
-    // Using history pushState implicitly via parent callback or direct manipulation
-    // Since onNavigate is passed, we rely on App's handler to do pushState, 
-    // but the onNavigate prop expects a Category, not a path string.
-    // However, App.tsx logic has been updated to accept string paths in `handleNavigate`.
-    // Wait, let's look at App.tsx again. It accepts pathOrCat.
-    
-    // We will call onNavigate with the full path string.
-    // Note: TypeScript might complain if onNavigate strictly types to FontCategory.
-    // We cast to any to be safe with the updated App.tsx logic which handles strings.
-    (onNavigate as any)(path);
+    window.location.hash = path;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -40,13 +32,13 @@ const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
             <h3 className="text-white font-bold text-sm uppercase tracking-wider mb-6">Categorías</h3>
             <ul className="space-y-3">
               {[
-                { label: 'Cursivas', path: '/letras-cursivas' },
-                { label: 'Facebook', path: '/letras-facebook' },
-                { label: 'Tatuajes', path: '/letras-tatuajes' },
-                { label: 'Góticas', path: '/letras-goticas' },
-                { label: 'Amino', path: '/letras-amino' },
-                { label: 'Graffiti', path: '/letras-graffiti' },
-                { label: 'Blog', path: '/blog' }, 
+                { label: 'Cursivas', path: '#/letras-cursivas' },
+                { label: 'Facebook', path: '#/letras-facebook' },
+                { label: 'Tatuajes', path: '#/letras-tatuajes' },
+                { label: 'Góticas', path: '#/letras-goticas' },
+                { label: 'Amino', path: '#/letras-amino' },
+                { label: 'Graffiti', path: '#/letras-graffiti' },
+                { label: 'Blog', path: '#/blog' }, // Added Blog to Footer
               ].map((item) => (
                   <li key={item.label}>
                     <a 
@@ -66,8 +58,8 @@ const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
             <ul className="space-y-3">
                <li>
                    <a 
-                    href="/sobre-nosotros" 
-                    onClick={(e) => handleLinkClick(e, '/sobre-nosotros')}
+                    href="#/sobre-nosotros" 
+                    onClick={(e) => handleLinkClick(e, '#/sobre-nosotros')}
                     className="text-slate-400 hover:text-white transition-colors text-sm cursor-pointer"
                    >
                        Sobre Nosotros
@@ -75,8 +67,8 @@ const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                </li>
                <li>
                    <a 
-                    href="/contacto" 
-                    onClick={(e) => handleLinkClick(e, '/contacto')}
+                    href="#/contacto" 
+                    onClick={(e) => handleLinkClick(e, '#/contacto')}
                     className="text-slate-400 hover:text-white transition-colors text-sm cursor-pointer"
                    >
                        Contacta con Nosotros
@@ -84,8 +76,8 @@ const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                </li>
                <li>
                    <a 
-                    href="/politica-de-privacidad" 
-                    onClick={(e) => handleLinkClick(e, '/politica-de-privacidad')}
+                    href="#/politica-de-privacidad" 
+                    onClick={(e) => handleLinkClick(e, '#/politica-de-privacidad')}
                     className="text-slate-400 hover:text-white transition-colors text-sm cursor-pointer"
                    >
                        Política de Privacidad
@@ -93,8 +85,8 @@ const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                </li>
                <li>
                    <a 
-                    href="/terminos-de-servicio" 
-                    onClick={(e) => handleLinkClick(e, '/terminos-de-servicio')}
+                    href="#/terminos-de-servicio" 
+                    onClick={(e) => handleLinkClick(e, '#/terminos-de-servicio')}
                     className="text-slate-400 hover:text-white transition-colors text-sm cursor-pointer"
                    >
                        Términos de Servicio

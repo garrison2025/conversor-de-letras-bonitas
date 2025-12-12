@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -12,50 +11,103 @@ import { BLOG_POSTS } from './data/blogPosts';
 import { SEO_DATA } from './data/seoContent';
 
 const App: React.FC = () => {
-  // Use pathname instead of hash
-  const [currentPath, setCurrentPath] = useState(window.location.pathname || '/');
+  const [currentPath, setCurrentPath] = useState(window.location.hash || '#/');
 
   useEffect(() => {
-    const handleLocationChange = () => {
-      const path = window.location.pathname;
-      setCurrentPath(path);
+    const handleHashChange = () => {
+      let hash = window.location.hash;
+      if (!hash) hash = '#/';
+      setCurrentPath(hash);
       window.scrollTo(0, 0);
       
-      // --- DYNAMIC SEO ENGINE ---
-      // Clean path is just the pathname now
-      const clean = path === '/' ? '/' : path.endsWith('/') ? path.slice(0, -1) : path;
+      const clean = hash.replace('#', '') || '/';
+      updateSeo(clean);
+    };
 
-      // Special Handling for Blog Routes
-      if (clean.startsWith('/blog/')) {
-          const slug = clean.replace('/blog/', '');
-          const post = BLOG_POSTS.find(p => p.slug === slug);
-          
-          if (post) {
-              document.title = `${post.title} - Blog LetrasBonitas`;
-              updateMeta('description', post.excerpt);
-              // Open Graph
-              updateMeta('og:title', post.title, true);
-              updateMeta('og:description', post.excerpt, true);
-          }
-      } else if (clean === '/blog') {
-          document.title = 'Blog y Tutoriales - Conversor de Letras Bonitas';
-          updateMeta('description', 'Lee nuestros tutoriales sobre cómo cambiar fuentes en Instagram, Free Fire y más.');
-      } else {
-          // Standard Routes
-          const route = routes[clean] || routes['/'];
-          document.title = `${route.title} - LetrasBonitas Pro`;
-          updateMeta('description', route.description);
-          // Open Graph
-          updateMeta('og:title', route.title, true);
-          updateMeta('og:description', route.description, true);
-      }
+    window.addEventListener('hashchange', handleHashChange);
+    // Initial SEO update
+    handleHashChange();
+
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  // --- DYNAMIC SEO & SCHEMA ENGINE ---
+  const updateSeo = (path: string) => {
+      const DOMAIN = 'https://conversordeletrasbonitas.org';
+      const fullUrl = `${DOMAIN}${path === '/' ? '/' : '/#' + path}`;
       
-      // Update: Correct domain for Canonical and OG URLs
-      const fullUrl = `https://conversordeletrasbonitas.org${clean === '/' ? '' : clean}`;
+      let title = 'Conversor de Letras Bonitas';
+      let description = 'Generador de fuentes y letras bonitas.';
+      let schemaData: any = null;
+
+      // 1. Identify Content Type
+      if (path.startsWith('/blog/')) {
+          const slug = path.replace('/blog/', '');
+          const post = BLOG_POSTS.find(p => p.slug === slug);
+          if (post) {
+              title = `${post.title} - Blog`;
+              description = post.excerpt;
+              // Blog Post Schema
+              schemaData = {
+                "@context": "https://schema.org",
+                "@type": "BlogPosting",
+                "headline": post.title,
+                "description": post.excerpt,
+                "author": { "@type": "Person", "name": post.author },
+                "datePublished": new Date().toISOString(), // In real app, parse post.date
+                "mainEntityOfPage": { "@type": "WebPage", "@id": fullUrl }
+              };
+          }
+      } else if (path === '/blog') {
+          title = 'Blog y Tutoriales - Conversor de Letras Bonitas';
+          description = 'Lee nuestros tutoriales sobre cómo cambiar fuentes en Instagram, Free Fire y más.';
+      } else {
+          const route = routes[path] || routes['/'];
+          title = `${route.title} - LetrasBonitas Pro`;
+          description = route.description;
+
+          // Category Page Schema (FAQ + Breadcrumb)
+          if (!route.isStatic && SEO_DATA[route.category]) {
+              const seoContent = SEO_DATA[route.category];
+              
+              // FAQ Schema
+              const faqItems = seoContent.faq.map(item => ({
+                  "@type": "Question",
+                  "name": item.q,
+                  "acceptedAnswer": {
+                      "@type": "Answer",
+                      "text": typeof item.a === 'string' ? item.a : "Visita nuestra web para ver la respuesta completa." // Simplified for JSON
+                  }
+              }));
+
+              schemaData = {
+                  "@context": "https://schema.org",
+                  "@graph": [
+                      {
+                          "@type": "BreadcrumbList",
+                          "itemListElement": [
+                              { "@type": "ListItem", "position": 1, "name": "Inicio", "item": DOMAIN },
+                              { "@type": "ListItem", "position": 2, "name": route.title, "item": fullUrl }
+                          ]
+                      },
+                      {
+                          "@type": "FAQPage",
+                          "mainEntity": faqItems
+                      }
+                  ]
+              };
+          }
+      }
+
+      // 2. Update Meta Tags
+      document.title = title;
+      updateMeta('description', description);
+      updateMeta('og:title', title, true);
+      updateMeta('og:description', description, true);
       updateMeta('og:url', fullUrl, true);
       updateMeta('twitter:url', fullUrl, true);
 
-      // 4. Update Canonical Tag
+      // 3. Update Canonical
       let linkCanonical = document.querySelector('link[rel="canonical"]');
       if (!linkCanonical) {
         linkCanonical = document.createElement('link');
@@ -63,23 +115,22 @@ const App: React.FC = () => {
         document.head.appendChild(linkCanonical);
       }
       linkCanonical.setAttribute('href', fullUrl);
-    };
 
-    // Listen for popstate (browser back/forward)
-    window.addEventListener('popstate', handleLocationChange);
-    // Custom event for internal navigation
-    window.addEventListener('pushstate', handleLocationChange);
-    
-    // Initial run
-    handleLocationChange();
+      // 4. Inject JSON-LD
+      let scriptSchema = document.getElementById('dynamic-schema');
+      if (!scriptSchema) {
+          scriptSchema = document.createElement('script');
+          scriptSchema.id = 'dynamic-schema';
+          scriptSchema.setAttribute('type', 'application/ld+json');
+          document.head.appendChild(scriptSchema);
+      }
+      if (schemaData) {
+          scriptSchema.textContent = JSON.stringify(schemaData);
+      } else {
+          scriptSchema.textContent = '';
+      }
+  };
 
-    return () => {
-        window.removeEventListener('popstate', handleLocationChange);
-        window.removeEventListener('pushstate', handleLocationChange);
-    };
-  }, []);
-
-  // Helper to update/create meta tags
   const updateMeta = (name: string, content: string, property: boolean = false) => {
       const key = property ? 'property' : 'name';
       let tag = document.querySelector(`meta[${key}="${name}"]`);
@@ -170,27 +221,20 @@ const App: React.FC = () => {
     }
   };
 
-  const cleanPath = currentPath === '/' ? '/' : currentPath.endsWith('/') ? currentPath.slice(0, -1) : currentPath;
+  const cleanPath = currentPath.replace('#', '') || '/';
   
   const handleNavigate = (pathOrCat: string | FontCategory) => {
-      let targetPath = '/';
-      
       // Determine if it's a category or a full path
-      if (typeof pathOrCat === 'string' && pathOrCat.startsWith('/')) {
-          targetPath = pathOrCat;
-      } else if (pathOrCat === 'blog') {
-          targetPath = '/blog';
+      if (typeof pathOrCat === 'string' && (pathOrCat.startsWith('#') || pathOrCat.startsWith('/'))) {
+          window.location.hash = pathOrCat;
       } else {
           const entry = Object.values(routes).find(r => r.category === pathOrCat && !r.isStatic);
           if (entry) {
-            targetPath = entry.path;
+            window.location.hash = entry.path;
+          } else if (pathOrCat === 'blog') {
+             window.location.hash = '/blog';
           }
       }
-
-      // History API Navigation
-      window.history.pushState({}, '', targetPath);
-      // Dispatch custom event so App component knows to re-render
-      window.dispatchEvent(new Event('pushstate'));
   };
 
   // Router Logic Render
