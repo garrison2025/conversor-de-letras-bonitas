@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { BlogPost } from '../types';
 
@@ -187,7 +188,7 @@ export const BLOG_POSTS: BlogPost[] = [
                 
                 <h3 className="font-bold text-white mt-4">1. Bubble Letters (Letras Burbuja)</h3>
                 <p>
-                    Son caracteres circulares, a veces rellenos (🅐🅑🅒) o huecos (ⓐⓑⓒ). Son amigables, divertidos y ocupan más espacio visual horizontal, lo que hace que tu comentario sea literalmente "más grande" que los demás.
+                    Son caracteres circulares, a veces rellenos (🅐🅑🅒) o huecos (ⓐⓑⓒ). Son amigables y divertidos y ocupan más espacio visual horizontal, lo que hace que tu comentario sea literalmente "más grande" que los demás.
                 </p>
 
                 <h3 className="font-bold text-white mt-4">2. Block Styles (Bloques)</h3>
@@ -735,7 +736,7 @@ export const BLOG_POSTS: BlogPost[] = [
                 </p>
                 <h3 className="font-bold text-white mt-4">1. Los "Separadores" (Dividers)</h3>
                 <p>
-                    Amino no tiene líneas horizontales nativas (`<hr>`). Debes crearlas con texto. Usa patrones como: 
+                    Amino no tiene líneas horizontales nativas (`&lt;hr&gt;`). Debes crearlas con texto. Usa patrones como: 
                     <br/><code className="bg-black/30 p-1 rounded text-pink-300">━━━━━━━━━※━━━━━━━━━</code><br/>
                     O estilos más suaves para bios 'soft':
                     <br/><code className="bg-black/30 p-1 rounded text-pink-300">─── ∙ ~εïз~ ∙ ───</code>
