@@ -22,8 +22,8 @@ export const SEO_DATA: Record<FontCategory, SeoContent> = {
         intro: (
             <>
                 Bienvenido al <strong>conversor de letras bonitas</strong> más avanzado de la web. Si buscas personalizar tus textos, este <strong>conversor de letras bonitas</strong> es la herramienta definitiva para transformar frases aburridas en tipografías estéticas y originales. 
-                Ideal para biografías de Instagram, estados de WhatsApp y <a href="#/letras-facebook" className="text-pink-400 hover:text-pink-300 underline decoration-pink-500/30 hover:decoration-pink-500">publicaciones de Facebook</a>. 
-                Con nuestro <strong>conversor de letras bonitas</strong>, podrás generar cientos de estilos Unicode, desde <a href="#/letras-cursivas" className="text-pink-400 hover:text-pink-300 underline decoration-pink-500/30 hover:decoration-pink-500">letras cursivas</a> hasta símbolos únicos, todo en cuestión de segundos.
+                Ideal para biografías de Instagram, estados de WhatsApp y <a href="/letras-facebook" className="text-pink-400 hover:text-pink-300 underline decoration-pink-500/30 hover:decoration-pink-500">publicaciones de Facebook</a>. 
+                Con nuestro <strong>conversor de letras bonitas</strong>, podrás generar cientos de estilos Unicode, desde <a href="/letras-cursivas" className="text-pink-400 hover:text-pink-300 underline decoration-pink-500/30 hover:decoration-pink-500">letras cursivas</a> hasta símbolos únicos, todo en cuestión de segundos.
             </>
         ),
         whyUse: {
@@ -67,7 +67,7 @@ export const SEO_DATA: Record<FontCategory, SeoContent> = {
             <>
                 Este <strong>conversor de letras cursivas</strong> transforma instantáneamente tu texto digital en elegante caligrafía script y manuscrita. 
                 Si buscas personalizar tu perfil, nuestro <strong>conversor de letras cursivas</strong> es la herramienta preferida para crear invitaciones digitales, nombres de usuario estéticos y mensajes románticos. 
-                Ofrecemos desde estilos 'Bold Script' hasta trazos finos, todo generado por este potente <strong>conversor de letras cursivas</strong> gratuito. Combínalo con <a href="#/letras-amino" className="text-pink-400 hover:text-pink-300 underline decoration-pink-500/30 hover:decoration-pink-500">decoraciones Amino</a> para un efecto único.
+                Ofrecemos desde estilos 'Bold Script' hasta trazos finos, todo generado por este potente <strong>conversor de letras cursivas</strong> gratuito. Combínalo con <a href="/letras-amino" className="text-pink-400 hover:text-pink-300 underline decoration-pink-500/30 hover:decoration-pink-500">decoraciones Amino</a> para un efecto único.
             </>
         ),
         whyUse: {
@@ -101,7 +101,7 @@ export const SEO_DATA: Record<FontCategory, SeoContent> = {
         },
         faq: [
             { q: "¿Qué es un conversor de letras cursivas Unicode?", a: "Es una herramienta que mapea letras normales a símbolos matemáticos alfanuméricos que imitan la escritura a mano, visibles en casi todos los dispositivos." },
-            { q: "¿Es gratis este conversor de letras cursivas?", a: <>Sí, puedes usar nuestro <strong>conversor de letras cursivas</strong> de forma ilimitada y gratuita. También puedes visitar el <a href="#/letras-facebook" className="text-indigo-400 hover:text-indigo-300">conversor para Facebook</a> para más opciones.</> }
+            { q: "¿Es gratis este conversor de letras cursivas?", a: <>Sí, puedes usar nuestro <strong>conversor de letras cursivas</strong> de forma ilimitada y gratuita. También puedes visitar el <a href="/letras-facebook" className="text-indigo-400 hover:text-indigo-300">conversor para Facebook</a> para más opciones.</> }
         ]
     },
     [FontCategory.TATTOO]: {
@@ -110,7 +110,7 @@ export const SEO_DATA: Record<FontCategory, SeoContent> = {
             <>
                 Utiliza nuestro <strong>conversor de letras para tatuajes</strong> como tu primer paso antes de marcar tu piel. 
                 Experimenta con estilos icónicos como 'Old School', 'Chicano', 'Viking Runes' y 'Minimalist Typewriter'. 
-                Antes de decidir tu diseño permanente, visualiza tu frase en <a href="#/letras-goticas" className="text-pink-400 hover:text-pink-300 underline decoration-pink-500/30 hover:decoration-pink-500">letras góticas</a> o romanas.
+                Antes de decidir tu diseño permanente, visualiza tu frase en <a href="/letras-goticas" className="text-pink-400 hover:text-pink-300 underline decoration-pink-500/30 hover:decoration-pink-500">letras góticas</a> o romanas.
             </>
         ),
         whyUse: {
@@ -144,7 +144,7 @@ export const SEO_DATA: Record<FontCategory, SeoContent> = {
         },
         faq: [
             { q: "¿Son precisas las Runas Vikingas?", a: "Usamos una transliteración estándar al alfabeto Futhark. Es ideal para fines estéticos y decorativos." },
-            { q: "¿Qué estilo es mejor para nombres?", a: <>La <a href="#/letras-cursivas" className="text-indigo-400 hover:text-indigo-300">letra cursiva</a> o el estilo 'Chicano' suelen ser las favoritas para nombres de seres queridos por su fluidez.</> }
+            { q: "¿Qué estilo es mejor para nombres?", a: <>La <a href="/letras-cursivas" className="text-indigo-400 hover:text-indigo-300">letra cursiva</a> o el estilo 'Chicano' suelen ser las favoritas para nombres de seres queridos por su fluidez.</> }
         ]
     },
     [FontCategory.GOTHIC]: {
@@ -153,7 +153,7 @@ export const SEO_DATA: Record<FontCategory, SeoContent> = {
             <>
                 Transforma tu identidad digital con el <strong>conversor de letras góticas</strong> más avanzado. 
                 Si buscas estética medieval, vampírica o metal, nuestro <strong>conversor de letras góticas</strong> convierte texto normal en tipografía Fraktur y Old English auténtica. 
-                A diferencia de otros generadores, este <strong>conversor de letras góticas</strong> está optimizado para tatuajes y redes sociales. También puedes explorar estilos urbanos en el <a href="#/letras-graffiti" className="text-pink-400 hover:text-pink-300 underline decoration-pink-500/30 hover:decoration-pink-500">conversor graffiti</a>.
+                A diferencia de otros generadores, este <strong>conversor de letras góticas</strong> está optimizado para tatuajes y redes sociales. También puedes explorar estilos urbanos en el <a href="/letras-graffiti" className="text-pink-400 hover:text-pink-300 underline decoration-pink-500/30 hover:decoration-pink-500">conversor graffiti</a>.
             </>
         ),
         whyUse: {
@@ -196,7 +196,7 @@ export const SEO_DATA: Record<FontCategory, SeoContent> = {
             <>
                 Lleva la calle a la pantalla con el <strong>conversor de letras graffiti</strong> definitivo. Ideal para diseños digitales rebeldes, modernos y urbanos. 
                 Este <strong>conversor de letras graffiti</strong> transforma texto plano en estilos icónicos como 'Spray Paint', 'Wildstyle', 'Blocks' y 'Bubble Letters'. 
-                Estos diseños funcionan increíblemente bien para captar la atención en <a href="#/letras-facebook" className="text-pink-400 hover:text-pink-300 underline decoration-pink-500/30 hover:decoration-pink-500">Facebook</a>, Instagram y Twitter.
+                Estos diseños funcionan increíblemente bien para captar la atención en <a href="/letras-facebook" className="text-pink-400 hover:text-pink-300 underline decoration-pink-500/30 hover:decoration-pink-500">Facebook</a>, Instagram y Twitter.
             </>
         ),
         whyUse: {
@@ -238,7 +238,7 @@ export const SEO_DATA: Record<FontCategory, SeoContent> = {
         intro: (
             <>
                 Destaca en el feed con el <strong>conversor de letras para Facebook</strong> más versátil. Aunque Facebook no permite cambiar fuentes nativamente, nuestro <strong>conversor de letras para Facebook</strong> habilita el uso de Negritas, Cursivas, Tachado y Monoroespacio en tus posts.
-                Es la herramienta definitiva para quienes buscan un <strong>conversor de letras para Facebook</strong> que también ofrezca símbolos virales, texto invisible y estilos tipo <a href="#/letras-amino" className="text-pink-400 hover:text-pink-300 underline decoration-pink-500/30 hover:decoration-pink-500">Amino</a>.
+                Es la herramienta definitiva para quienes buscan un <strong>conversor de letras para Facebook</strong> que también ofrezca símbolos virales, texto invisible y estilos tipo <a href="/letras-amino" className="text-pink-400 hover:text-pink-300 underline decoration-pink-500/30 hover:decoration-pink-500">Amino</a>.
             </>
         ),
         whyUse: {
@@ -281,7 +281,7 @@ export const SEO_DATA: Record<FontCategory, SeoContent> = {
             <>
                 Bienvenido al <strong>conversor de letras Amino</strong> más completo de la web. La comunidad Amino se basa en la creatividad visual, y nuestro <strong>conversor de letras Amino</strong> es la herramienta esencial para destacar.
                 Diseñado específicamente para esta app, este <strong>conversor de letras Amino</strong> te permite generar marcos, bordes, separadores y estilos 'soft' (kawaii) al instante.
-                Combina estos estilos generados por el <strong>conversor de letras Amino</strong> con <a href="#/letras-cursivas" className="text-pink-400 hover:text-pink-300 underline decoration-pink-500/30 hover:decoration-pink-500">letras cursivas</a> para crear blogs, wikis y perfiles verdaderamente únicos y profesionales.
+                Combina estos estilos generados por el <strong>conversor de letras Amino</strong> con <a href="/letras-cursivas" className="text-pink-400 hover:text-pink-300 underline decoration-pink-500/30 hover:decoration-pink-500">letras cursivas</a> para crear blogs, wikis y perfiles verdaderamente únicos y profesionales.
             </>
         ),
         whyUse: {

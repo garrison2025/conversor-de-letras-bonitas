@@ -12,17 +12,18 @@ import { BLOG_POSTS } from './data/blogPosts';
 import { SEO_DATA } from './data/seoContent';
 
 const App: React.FC = () => {
-  const [currentPath, setCurrentPath] = useState(window.location.hash || '#/');
+  // Use pathname instead of hash
+  const [currentPath, setCurrentPath] = useState(window.location.pathname || '/');
 
   useEffect(() => {
-    const handleHashChange = () => {
-      let hash = window.location.hash;
-      if (!hash) hash = '#/';
-      setCurrentPath(hash);
+    const handleLocationChange = () => {
+      const path = window.location.pathname;
+      setCurrentPath(path);
       window.scrollTo(0, 0);
       
       // --- DYNAMIC SEO ENGINE ---
-      const clean = hash.replace('#', '') || '/';
+      // Clean path is just the pathname now
+      const clean = path === '/' ? '/' : path.endsWith('/') ? path.slice(0, -1) : path;
 
       // Special Handling for Blog Routes
       if (clean.startsWith('/blog/')) {
@@ -49,7 +50,7 @@ const App: React.FC = () => {
           updateMeta('og:description', route.description, true);
       }
       
-      const fullUrl = `https://letrasbonitas.pro${clean === '/' ? '' : '/#' + clean}`;
+      const fullUrl = `https://letrasbonitas.pro${clean === '/' ? '' : clean}`;
       updateMeta('og:url', fullUrl, true);
       updateMeta('twitter:url', fullUrl, true);
 
@@ -63,10 +64,18 @@ const App: React.FC = () => {
       linkCanonical.setAttribute('href', fullUrl);
     };
 
-    window.addEventListener('hashchange', handleHashChange);
-    handleHashChange();
+    // Listen for popstate (browser back/forward)
+    window.addEventListener('popstate', handleLocationChange);
+    // Custom event for internal navigation
+    window.addEventListener('pushstate', handleLocationChange);
+    
+    // Initial run
+    handleLocationChange();
 
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    return () => {
+        window.removeEventListener('popstate', handleLocationChange);
+        window.removeEventListener('pushstate', handleLocationChange);
+    };
   }, []);
 
   // Helper to update/create meta tags
@@ -160,20 +169,27 @@ const App: React.FC = () => {
     }
   };
 
-  const cleanPath = currentPath.replace('#', '') || '/';
+  const cleanPath = currentPath === '/' ? '/' : currentPath.endsWith('/') ? currentPath.slice(0, -1) : currentPath;
   
   const handleNavigate = (pathOrCat: string | FontCategory) => {
+      let targetPath = '/';
+      
       // Determine if it's a category or a full path
-      if (typeof pathOrCat === 'string' && (pathOrCat.startsWith('#') || pathOrCat.startsWith('/'))) {
-          window.location.hash = pathOrCat;
+      if (typeof pathOrCat === 'string' && pathOrCat.startsWith('/')) {
+          targetPath = pathOrCat;
+      } else if (pathOrCat === 'blog') {
+          targetPath = '/blog';
       } else {
           const entry = Object.values(routes).find(r => r.category === pathOrCat && !r.isStatic);
           if (entry) {
-            window.location.hash = entry.path;
-          } else if (pathOrCat === 'blog') {
-             window.location.hash = '/blog';
+            targetPath = entry.path;
           }
       }
+
+      // History API Navigation
+      window.history.pushState({}, '', targetPath);
+      // Dispatch custom event so App component knows to re-render
+      window.dispatchEvent(new Event('pushstate'));
   };
 
   // Router Logic Render

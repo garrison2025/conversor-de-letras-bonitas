@@ -12,7 +12,7 @@ const BlogListPage: React.FC<BlogListPageProps> = ({ onNavigate }) => {
 
     const handleArticleClick = (e: React.MouseEvent, slug: string) => {
         e.preventDefault();
-        onNavigate(`#/blog/${slug}`);
+        onNavigate(`/blog/${slug}`);
     };
 
     // Extract unique categories
@@ -110,7 +110,7 @@ const BlogListPage: React.FC<BlogListPageProps> = ({ onNavigate }) => {
                                     </div>
                                     
                                     <h2 className="text-xl font-bold text-white mb-4 leading-snug group-hover:text-pink-300 transition-colors">
-                                        <a href={`#/blog/${post.slug}`} onClick={(e) => handleArticleClick(e, post.slug)}>
+                                        <a href={`/blog/${post.slug}`} onClick={(e) => handleArticleClick(e, post.slug)}>
                                             {post.title}
                                         </a>
                                     </h2>
@@ -121,7 +121,7 @@ const BlogListPage: React.FC<BlogListPageProps> = ({ onNavigate }) => {
 
                                     <div className="mt-auto pt-6 border-t border-white/5">
                                         <a 
-                                            href={`#/blog/${post.slug}`}
+                                            href={`/blog/${post.slug}`}
                                             onClick={(e) => handleArticleClick(e, post.slug)}
                                             className="text-white font-medium text-sm flex items-center gap-2 group/link"
                                         >
