@@ -816,7 +816,7 @@ export const BLOG_POSTS: BlogPost[] = [
 
                 <h2 className="text-2xl font-bold text-white mt-8 mb-4">Conclusión</h2>
                 <p>
-                    Facebook es una plataforma saturada. Para destacar, debes ser diferente. Utiliza estos estilos avanzados del <strong>conversor de letras para facebook</strong> con sabiduría y observa cómo crecen tus notificaciones.
+                    Facebook es una plataforma saturada. Para destacar, debes ser diferente. Utiliza estos estilos avanzados del <strong>conversor de letras para facebook</strong> con sabiduría y observa cómo crece tus notificaciones.
                 </p>
             </>
         )
