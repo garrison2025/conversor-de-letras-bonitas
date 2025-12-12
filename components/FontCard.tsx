@@ -223,7 +223,8 @@ const FontCard: React.FC<FontCardProps> = ({ id, name, result, originalText = "T
       // Watermark
       ctx.fillStyle = (imgConfig.bgType === 'solid' && imgConfig.bgValue === '#FFFFFF') ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.4)';
       ctx.font = '24px "DM Sans", sans-serif';
-      ctx.fillText('letrasbonitas.pro', x, canvas.height - 40);
+      // Updated watermark to match the actual domain
+      ctx.fillText('conversordeletrasbonitas.org', x, canvas.height - 40);
 
       try {
           const dataUrl = canvas.toDataURL('image/png');

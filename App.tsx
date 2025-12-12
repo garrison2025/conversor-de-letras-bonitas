@@ -50,7 +50,8 @@ const App: React.FC = () => {
           updateMeta('og:description', route.description, true);
       }
       
-      const fullUrl = `https://letrasbonitas.pro${clean === '/' ? '' : clean}`;
+      // Update: Correct domain for Canonical and OG URLs
+      const fullUrl = `https://conversordeletrasbonitas.org${clean === '/' ? '' : clean}`;
       updateMeta('og:url', fullUrl, true);
       updateMeta('twitter:url', fullUrl, true);
 
